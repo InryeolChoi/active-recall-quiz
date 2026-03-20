@@ -218,6 +218,16 @@ venv.bak/
 dmypy.json
 
 # Pyre type checker
+
+### Node / Next.js ###
+frontend/node_modules/
+frontend/.next/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+### Local virtualenv ###
+backend/.venv/
 .pyre/
 
 # pytype static type analyzer
@@ -283,4 +293,3 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
-
