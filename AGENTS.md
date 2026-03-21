@@ -79,3 +79,11 @@ unit_* 디렉토리는 공유 문서 영역이다.
 ### 리뷰
 - 모든 unit_* 변경은 PR 리뷰 필수
 - Reviewer 승인 없이 merge 금지
+
+---
+
+## 📝 Author Workflow (Exception)
+
+- Author는 unit_* 초안을 main에 직접 작성할 수 있다
+- 단, 반드시 markdown 검사기를 통해 정제해야 한다
+- 최종 품질은 fix PR로 관리한다
