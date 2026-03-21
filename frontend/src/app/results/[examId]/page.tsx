@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { BackLink } from "@/components/BackLink";
 import { ResultSummary } from "@/components/ResultSummary";
 import { getExamResult } from "@/lib/api";
 
@@ -18,6 +19,7 @@ export default async function ResultPage({ params }: Props) {
           <div className="badge">채점 결과</div>
           <h1>맞은 부분과 빠진 키워드를 한눈에 봅니다.</h1>
           <div className="actions">
+            <BackLink fallbackHref={`/exam/${examId}`} />
             <Link className="button secondary" href="/exam">
               다른 시험 만들기
             </Link>
