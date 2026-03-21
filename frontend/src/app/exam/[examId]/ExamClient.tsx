@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -39,22 +38,16 @@ export function ExamClient({ exam }: Props) {
 
   return (
     <div className="stack">
-      <section className="panel stack">
+      <section className="panel stack exam-status">
         <div className="actions">
-          <div className="badge">답안 작성 {answeredCount} / {exam.questions.length}</div>
+          <div className="badge">
+            답안 작성 {answeredCount} / {exam.questions.length}
+          </div>
           <div className="badge secondary-badge">미작성 {unansweredCount}</div>
         </div>
         <p className="muted">
           빈칸으로 제출해도 채점은 가능하지만, 실전처럼 끝까지 적어보는 쪽이 더 좋습니다.
         </p>
-        <div className="actions">
-          <Link className="button secondary" href="/exam">
-            다른 시험 만들기
-          </Link>
-          <button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "채점 중..." : "제출하고 채점 보기"}
-          </button>
-        </div>
         {error ? <p className="error-text">{error}</p> : null}
       </section>
 
@@ -76,6 +69,18 @@ export function ExamClient({ exam }: Props) {
           />
         </QuestionCard>
       ))}
+
+      <section className="panel stack submit-panel">
+        <h2>제출하기</h2>
+        <p className="muted">
+          다 적었으면 아래 버튼으로 제출하세요. 채점 결과와 오답노트는 제출 후 바로 이어집니다.
+        </p>
+        <div className="actions">
+          <button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? "채점 중..." : "제출하고 채점 보기"}
+          </button>
+        </div>
+      </section>
     </div>
   );
 }

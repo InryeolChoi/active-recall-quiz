@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { BackLink } from "@/components/BackLink";
 import { ExamClient } from "@/app/exam/[examId]/ExamClient";
 import { getExam } from "@/lib/api";
 
@@ -22,6 +23,7 @@ export default async function ExamDetailPage({ params }: Props) {
             {exam.parts.length > 0 ? ` / ${exam.parts.join(", ")}` : ""}
           </p>
           <div className="actions">
+            <BackLink fallbackHref="/exam" />
             <Link className="button secondary" href="/exam">
               시험 설정으로 돌아가기
             </Link>

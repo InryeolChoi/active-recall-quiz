@@ -105,6 +105,13 @@ button.secondary {
   padding: 20px;
 }
 
+.study-answer {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(138, 90, 50, 0.08);
+  border: 1px solid rgba(138, 90, 50, 0.15);
+}
+
 .muted {
   color: var(--muted);
 }
@@ -136,6 +143,16 @@ textarea {
   background: white;
   color: var(--text);
   font: inherit;
+}
+
+.submit-panel {
+  margin-top: 8px;
+}
+
+.exam-status {
+  position: sticky;
+  top: 16px;
+  z-index: 1;
 }
 
 .checkbox-row {
@@ -181,5 +198,9 @@ ul {
   .page {
     width: min(100% - 20px, 1080px);
     padding-top: 24px;
+  }
+
+  .exam-status {
+    position: static;
   }
 }
