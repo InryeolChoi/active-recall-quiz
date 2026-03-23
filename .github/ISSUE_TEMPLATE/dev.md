@@ -5,7 +5,7 @@ name: 🛠 Feature / Fix
 about: 기능 개발 및 버그 수정
 title: "[Feature] "
 labels: backend
-assignees: ''
+assignees: [InryeolChoi]
 ---
 
 ## 📌 작업 내용
@@ -34,3 +34,4 @@ assignees: ''
 ## ⚠️ 참고사항
 - PR 필수
 - Closes #이슈번호 반드시 포함
+- 새 이슈는 기본적으로 `InryeolChoi`에 할당됩니다.
