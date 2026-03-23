@@ -21,6 +21,15 @@
 
 ---
 
+## 📦 Repository Scope
+
+- 이 저장소는 학습 노트 자체를 원본으로 보관하지 않는다.
+- 학습 노트의 원본은 `active-recall-notes` 저장소에 있다.
+- 이 저장소는 CI/CD로 동기화된 데이터를 받아 SQLite에 저장하고, 시험/학습 경험을 제공한다.
+- `unit_*` 폴더는 더 이상 이 저장소의 기본 작업 단위가 아니다.
+
+---
+
 ## 🟢 Workflow (🔥 중요)
 
 1. 작업 시작 전 반드시 Issue 생성
@@ -50,40 +59,30 @@
 - /shared → PM만 수정 가능
 
 ⚠️ 다른 영역 수정 금지
+⚠️ `unit_*` 디렉토리 생성/수정 금지
 
 ---
 
-## 📁 Special Rule: unit_* (정처기 이론 폴더)
+## 🧭 Role Boundaries
 
-unit_* 디렉토리는 공유 문서 영역이다.
-
-### 역할
-- Author: 이론 작성 및 구조 설계
-- Fix agent: 오타 및 개념 오류 수정
-- Reviewer: 내용 검증 및 승인
-
-### 수정 규칙
-- 기존 내용을 전체 삭제 금지
-- 필요한 부분만 수정 (diff 기반)
-- 구조 변경은 Reviewer 승인 필요
-
-### 브랜치 규칙
-- feature/unit-* → 신규 이론 작성
-- fix/unit-* → 오류 수정
-- refactor/unit-* → 구조 개선
-
-### 충돌 방지
-- 하나의 unit 파일은 동시에 하나의 agent만 작업
-- 작업 시작 시 Issue로 해당 파일을 명시 (lock 역할)
-
-### 리뷰
-- 모든 unit_* 변경은 PR 리뷰 필수
-- Reviewer 승인 없이 merge 금지
+- PM
+  - Issue 생성
+  - 작업 분해
+  - 우선순위 설정
+  - 다른 agent에게 작업 할당
+- backend
+  - 데이터 동기화 파이프라인
+  - SQLite 저장 구조
+  - API 및 서버 로직
+- frontend
+  - 사용자 화면
+  - API 연동
+  - 학습/시험/결과 UI
 
 ---
 
-## 📝 Author Workflow (Exception)
+## ✅ Change Policy
 
-- Author는 unit_* 초안을 main에 직접 작성할 수 있다
-- 단, 반드시 markdown 검사기를 통해 정제해야 한다
-- 최종 품질은 fix PR로 관리한다
+- 이 저장소에서 문서나 설정을 바꿀 때는 현재 아키텍처와 충돌하지 않는지 먼저 확인한다.
+- 새 이론/노트 콘텐츠는 이 저장소가 아니라 `active-recall-notes` 쪽에서 관리한다.
+- 기존 `unit_*` 관련 언급은 레거시로만 취급하며, 신규 작업 기준으로 사용하지 않는다.
