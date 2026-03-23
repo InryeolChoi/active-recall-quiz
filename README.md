@@ -2,7 +2,7 @@
 
 <div align="center">
 
-### Markdown notes become a living question bank
+### External notes become a searchable question bank
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-111111?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-20232A?style=for-the-badge&logo=react)](https://react.dev/)
@@ -10,9 +10,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Python](https://img.shields.io/badge/Python-3.x-3776AB?style=for-the-badge&logo=python)](https://www.python.org/)
 
-정리해 둔 Markdown 학습 노트를 그대로 불러와  
-문제 은행을 만들고, 시험을 생성하고, 서술형으로 채점하고, 오답노트까지 이어지는  
-**Active Recall 기반 학습 앱**입니다.
+이 프로젝트는 별도 저장소 `active-recall-notes`에 있는 Markdown 노트를  
+CI/CD로 수집해 이 앱의 SQLite에 적재하고,  
+그 데이터를 바탕으로 문제 생성, 시험, 채점, 오답 복습 흐름을 제공합니다.
 
 </div>
 
@@ -20,51 +20,58 @@
 
 ## Why This Project
 
-보통 시험 준비는 이렇게 끊깁니다.
+학습 노트와 문제 풀이가 같은 저장소에 묶여 있으면 다음 문제가 생깁니다.
 
-- 노트는 Markdown으로 정리해둠
-- 문제는 따로 만들어야 함
-- 시험처럼 풀고 채점하는 흐름이 없음
-- 틀린 문제를 다시 모아보기가 번거로움
+- 노트와 애플리케이션의 책임이 섞입니다.
+- 콘텐츠 갱신과 앱 배포 주기가 충돌합니다.
+- 로컬 Markdown 폴더에 의존하면 데이터 관리가 분산됩니다.
 
-이 프로젝트는 그 사이를 연결합니다.
+이 저장소는 그 흐름을 분리합니다.
 
-> `Markdown note -> parser -> question bank -> exam session -> grading -> wrong notes`
+> `active-recall-notes -> CI/CD sync -> SQLite -> question bank -> exam session -> grading -> wrong notes`
 
-즉, 이미 정리한 학습 자료를 다시 입력하지 않고도  
-반복 회상 학습에 바로 연결할 수 있게 만드는 것이 목표입니다.
+즉, 콘텐츠는 별도 레포에서 관리하고, 이 앱은 그 데이터를 읽어 학습 경험을 제공하는 역할에 집중합니다.
 
-## Highlights
-
-- `unit_*/*.md` 노트를 자동으로 읽어 문제 목록으로 변환
-- FastAPI 기반 시험 생성, 제출, 채점 API 제공
-- Next.js App Router 기반 학습/시험/결과/오답노트 화면 구성
-- 단답형과 나열형 문제를 구분해서 채점
-- 오답 결과를 프론트엔드 로컬 스토리지에 저장해 재복습 가능
-- 현재 정처기 실기 스타일 학습 흐름에 맞춘 초기 MVP 형태
-
-## Experience Flow
+## Architecture
 
 ```mermaid
 flowchart LR
-    A["Markdown Notes"] --> B["Loose Parser"]
-    B --> C["Normalized Questions"]
-    C --> D["Study Mode"]
-    C --> E["Exam Generator"]
-    E --> F["Exam Submission"]
-    F --> G["Grading Result"]
-    G --> H["Wrong Notes"]
+    A["active-recall-notes"] --> B["CI/CD Sync"]
+    B --> C["SQLite"]
+    C --> D["Normalizer / Parser"]
+    D --> E["Question Bank"]
+    E --> F["Study Mode"]
+    E --> G["Exam Generator"]
+    G --> H["Exam Submission"]
+    H --> I["Grading Result"]
+    I --> J["Wrong Notes"]
 ```
+
+## Highlights
+
+- Markdown 노트는 이 저장소가 아니라 `active-recall-notes`에서 관리합니다.
+- CI/CD 파이프라인이 외부 노트를 수집해 SQLite에 적재하는 흐름을 전제로 합니다.
+- FastAPI가 시험 생성, 제출, 채점 API를 제공합니다.
+- Next.js App Router 기반 화면에서 학습, 시험, 결과, 오답노트를 확인합니다.
+- 오답 결과는 프론트엔드 로컬 스토리지에 저장해 재복습할 수 있습니다.
+
+## Repository Scope
+
+이 저장소의 책임은 콘텐츠 작성이 아니라, 이미 수집된 노트를 학습 가능한 서비스로 바꾸는 것입니다.
+
+- `backend`: 데이터 적재, 질문 생성, 시험, 채점, 통계 API
+- `frontend`: 학습/시험/결과/오답노트 UI
+- `shared`: 공용 계약이나 산출물
+- `active-recall-notes`: 원본 Markdown 노트 저장소
 
 ## Project Structure
 
 ```text
 .
-├── unit_*                  # 원본 학습 노트 markdown
-├── backend                 # FastAPI API, parser, grading logic
+├── backend                 # FastAPI API, SQLite access, grading logic
 │   ├── app
 │   │   ├── api             # REST endpoints
-│   │   ├── parsers         # markdown parser / normalizer / loader
+│   │   ├── parsers         # markdown normalization / ingestion helpers
 │   │   ├── schemas         # pydantic models
 │   │   ├── services        # question / exam / grading / stats
 │   │   └── utils           # ids, text normalization
@@ -77,10 +84,17 @@ flowchart LR
 └── shared/openapi.json     # shared contract placeholder
 ```
 
+## Data Model
+
+- Source of truth: `active-recall-notes`
+- Synchronized storage: SQLite in this repository
+- Runtime API: FastAPI reads from SQLite and serves normalized question data
+- Client-side cache: browser `localStorage` for wrong notes
+
 ## Key Screens
 
 ### 1. Home
-- 단원 수와 파싱된 문제 수를 요약해서 보여줍니다.
+- 수집된 단원과 파싱된 문제 수를 요약해서 보여줍니다.
 - 학습 모드, 시험 모드, 오답노트로 바로 이동할 수 있습니다.
 
 ### 2. Study Mode
@@ -97,7 +111,7 @@ flowchart LR
 
 ## Markdown Question Format
 
-현재 파서는 비교적 느슨한 규칙으로 동작합니다.
+`active-recall-notes`에 들어 있는 Markdown은 가능한 한 단순한 규칙으로 정규화됩니다.
 
 - `*`로 시작하는 줄: 문제 설명
 - `->`로 시작하는 줄: 정답
@@ -123,8 +137,8 @@ flowchart LR
 | --- | --- |
 | Frontend | Next.js 16, React 19, TypeScript |
 | Backend | FastAPI, Pydantic, Uvicorn |
-| Data Source | Local Markdown files |
-| Persistence | In-memory exam/result store, browser localStorage |
+| Data Source | `active-recall-notes` repository |
+| Persistence | SQLite, browser `localStorage` |
 | Testing | pytest |
 
 ## Run Locally
@@ -132,7 +146,7 @@ flowchart LR
 ### 1. Backend
 
 ```bash
-cd /Users/inchoi/prepareExam/backend
+cd /Users/inchoi/active_recall_quiz/backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -147,7 +161,7 @@ uvicorn app.main:app --reload
 ### 2. Frontend
 
 ```bash
-cd /Users/inchoi/prepareExam/frontend
+cd /Users/inchoi/active_recall_quiz/frontend
 npm install
 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api npm run dev
 ```
@@ -182,25 +196,25 @@ NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api npm run dev
 ## Test
 
 ```bash
-cd /Users/inchoi/prepareExam/backend
+cd /Users/inchoi/active_recall_quiz/backend
 pytest
 ```
 
 현재 테스트는 아래 핵심 흐름을 확인합니다.
 
-- 샘플 Markdown 파싱
+- 노트 정규화와 문제 변환
 - 단답형 채점 로직
 
 ## Current Architecture Notes
 
-- 시험과 결과는 백엔드 메모리에 저장됩니다.
-- 서버 재시작 시 시험 세션과 결과는 유지되지 않습니다.
+- 현재 목표는 로컬 Markdown 폴더가 아니라 외부 노트 저장소를 기준으로 동작하는 것입니다.
+- 데이터는 `active-recall-notes`에서 동기화되고, 이 저장소의 SQLite에 저장되는 흐름을 전제로 합니다.
+- 앱은 콘텐츠 저장소를 직접 편집하지 않고, 수집된 데이터를 서비스 계층에서 활용합니다.
 - 오답노트는 브라우저 `localStorage`에 저장됩니다.
-- 현재는 빠르게 반복 실험하기 좋은 MVP 구조입니다.
 
 ## Roadmap Ideas
 
-- 정답 가리기 기반의 진짜 study mode 개선
+- CI/CD 기반 동기화 파이프라인 안정화
 - 문제 난이도/태그/단원별 가중치 출제
 - 결과 영속화 및 사용자별 기록 저장
 - OpenAPI 문서 자동 생성 및 `shared/openapi.json` 정리
@@ -210,6 +224,7 @@ pytest
 ## Repository Intent
 
 이 저장소는 단순한 퀴즈 앱보다,  
-**개인 학습 노트를 시험 가능한 인터랙티브 학습 시스템으로 바꾸는 실험**에 가깝습니다.
+외부 Markdown 노트를 학습 가능한 서비스 데이터로 바꾸는 시스템입니다.
 
-정처기 실기처럼 서술형 회상 연습이 중요한 시험을 준비할 때 특히 잘 어울립니다.
+콘텐츠는 `active-recall-notes`에서 관리하고,  
+이 저장소는 SQLite, API, UI를 통해 회상 학습 경험을 제공합니다.
