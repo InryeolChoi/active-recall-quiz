@@ -5,7 +5,7 @@ name: 📚 Theory 작성
 about: 정처기 이론 작성 및 수정
 title: "[Theory] "
 labels: theory
-assignees: ''
+assignees: [InryeolChoi]
 ---
 
 ## 📌 대상 unit
@@ -34,3 +34,4 @@ assignees: ''
 ## ⚠️ 참고사항
 - 기존 내용 삭제 금지
 - diff 기반 수정
+- 새 이슈는 기본적으로 `InryeolChoi`에 할당됩니다.
