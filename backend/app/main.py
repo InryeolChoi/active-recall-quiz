@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes_content_sync import router as content_sync_router
 from app.api.routes_exams import router as exams_router
 from app.api.routes_questions import router as questions_router
 from app.api.routes_stats import router as stats_router
@@ -24,6 +25,7 @@ app.include_router(units_router, prefix="/api")
 app.include_router(questions_router, prefix="/api")
 app.include_router(exams_router, prefix="/api")
 app.include_router(stats_router, prefix="/api")
+app.include_router(content_sync_router, prefix="/api")
 
 
 @app.get("/health")
