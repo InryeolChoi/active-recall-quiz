@@ -63,6 +63,170 @@ main {
   margin-bottom: 20px;
 }
 
+.study-toolbar {
+  gap: 20px;
+}
+
+.study-toolbar-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: start;
+}
+
+.study-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.study-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.study-meta-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.study-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.study-progress-track {
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(217, 186, 145, 0.28);
+}
+
+.study-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), #b57f4d);
+  transition: width 180ms ease;
+}
+
+.toc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.toc-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 112px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.74);
+  color: var(--text);
+  text-align: left;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.toc-item:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-soft);
+  box-shadow: 0 12px 24px rgba(89, 58, 24, 0.08);
+}
+
+.toc-item.active {
+  border-color: var(--accent);
+  background: rgba(217, 186, 145, 0.22);
+}
+
+.toc-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--surface-strong);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.toc-item p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.deck-frame {
+  animation-duration: 220ms;
+  animation-fill-mode: both;
+}
+
+.deck-frame--forward {
+  animation-name: slide-forward;
+}
+
+.deck-frame--backward {
+  animation-name: slide-backward;
+}
+
+.study-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.hint-box {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(138, 90, 50, 0.07);
+  border: 1px solid rgba(138, 90, 50, 0.15);
+}
+
+.hint-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.hint-list p {
+  margin: 4px 0 0;
+}
+
+@keyframes slide-forward {
+  from {
+    opacity: 0;
+    transform: translateX(18px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes slide-backward {
+  from {
+    opacity: 0;
+    transform: translateX(-18px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
 .actions {
   display: flex;
   gap: 12px;
@@ -193,6 +357,16 @@ ul {
 @media (max-width: 720px) {
   .grid.columns-2 {
     grid-template-columns: 1fr;
+  }
+
+  .study-toolbar-head,
+  .study-filter-grid,
+  .hint-list {
+    grid-template-columns: 1fr;
+  }
+
+  .study-badges {
+    justify-content: flex-start;
   }
 
   .page {

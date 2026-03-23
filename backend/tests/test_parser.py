@@ -5,7 +5,8 @@ from app.parsers.normalizer import normalize_parsed_file
 
 
 def test_parse_current_sample() -> None:
-    parsed = parse_markdown_file(Path("unit_1_1/part1.md"))
+    sample_path = Path(__file__).resolve().parents[2] / "unit_1_1" / "part1.md"
+    parsed = parse_markdown_file(sample_path)
     assert parsed.unit_id == "unit_1_1"
     assert len(parsed.items) >= 1
 
