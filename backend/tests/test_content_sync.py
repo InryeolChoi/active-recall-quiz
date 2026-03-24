@@ -85,6 +85,16 @@ def test_imported_bundle_becomes_runtime_source(isolated_sqlite: None) -> None:
     assert summaries[0].questionCount == 2
 
 
+def test_import_creates_sqlite_file(isolated_sqlite: None) -> None:
+    sqlite_path = settings.sqlite_path
+
+    assert not sqlite_path.exists()
+
+    ContentSyncService().import_bundle(_sample_bundle())
+
+    assert sqlite_path.exists()
+
+
 def test_import_reuses_existing_snapshot_for_same_bundle_version(isolated_sqlite: None) -> None:
     first = ContentSyncService().import_bundle(_sample_bundle())
     second = ContentSyncService().import_bundle(_sample_bundle())
