@@ -1,5 +1,5 @@
 import { BackLink } from "@/components/BackLink";
-import { StudyDeck } from "@/components/StudyDeck";
+import { StudyDeckClient } from "@/components/StudyDeckClient";
 import { getQuestions, getUnits } from "@/lib/api";
 
 export default async function StudyPage() {
@@ -19,7 +19,7 @@ export default async function StudyPage() {
           </div>
         </section>
 
-        <StudyDeck questions={questions} units={units} />
+        <StudyDeckClient questions={questions} units={units} />
       </div>
     </main>
   );

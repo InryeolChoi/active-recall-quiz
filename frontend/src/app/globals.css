@@ -65,6 +65,11 @@ main {
 
 .study-toolbar {
   gap: 20px;
+  overflow: hidden;
+}
+
+.study-toolbar--collapsed {
+  gap: 16px;
 }
 
 .study-toolbar-head {
@@ -101,6 +106,17 @@ main {
   gap: 10px;
 }
 
+.study-collapsed-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(216, 198, 174, 0.9);
+}
+
 .study-progress-track {
   height: 12px;
   border-radius: 999px;
@@ -120,6 +136,15 @@ main {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 12px;
+}
+
+.toc-grid--animated .toc-item {
+  opacity: 0;
+  transform: translateY(14px) scale(0.98);
+}
+
+.toc-grid--animated.visible .toc-item {
+  animation: rise-in 340ms ease forwards;
 }
 
 .toc-item {
@@ -174,6 +199,14 @@ main {
   animation-fill-mode: both;
 }
 
+.study-empty-state,
+.recent-history-empty {
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px dashed rgba(138, 90, 50, 0.2);
+}
+
 .deck-frame--forward {
   animation-name: slide-forward;
 }
@@ -203,6 +236,17 @@ main {
 
 .hint-list p {
   margin: 4px 0 0;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes slide-forward {
@@ -263,6 +307,33 @@ button.secondary {
 
 .grid.columns-2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.home-section-head {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: start;
+}
+
+.recent-history-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.recent-history-card {
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(216, 198, 174, 0.95);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.recent-history-meta {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .question-card {
@@ -361,12 +432,20 @@ ul {
 
   .study-toolbar-head,
   .study-filter-grid,
-  .hint-list {
+  .hint-list,
+  .recent-history-grid {
     grid-template-columns: 1fr;
   }
 
   .study-badges {
     justify-content: flex-start;
+  }
+
+  .study-collapsed-bar,
+  .home-section-head,
+  .recent-history-meta {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .page {
