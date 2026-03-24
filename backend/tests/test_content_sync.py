@@ -87,6 +87,11 @@ def test_imported_bundle_becomes_runtime_source(isolated_sqlite: None) -> None:
     assert summaries[0].questionCount == 2
 
 
+def test_runtime_lists_are_empty_without_active_snapshot(isolated_sqlite: None) -> None:
+    assert QuestionService().list_questions() == []
+    assert QuestionService().list_units() == []
+
+
 def test_import_creates_sqlite_file(isolated_sqlite: None) -> None:
     sqlite_path = settings.sqlite_path
 

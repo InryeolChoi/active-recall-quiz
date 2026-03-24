@@ -2,23 +2,13 @@ from functools import lru_cache
 
 from fastapi import HTTPException
 
-from app.parsers.loader import iter_markdown_files
-from app.parsers.markdown_parser import parse_markdown_file
-from app.parsers.normalizer import normalize_parsed_file
 from app.repositories.content_store import ContentStore
 from app.schemas.question import QuestionDetail, UnitSummary
 
 
 @lru_cache(maxsize=1)
 def _load_questions() -> list[QuestionDetail]:
-    persisted_questions = ContentStore().list_active_questions()
-    if persisted_questions:
-        return persisted_questions
-
-    questions: list[QuestionDetail] = []
-    for path in iter_markdown_files():
-        questions.extend(normalize_parsed_file(parse_markdown_file(path)))
-    return questions
+    return ContentStore().list_active_questions()
 
 
 def reset_question_cache() -> None:
