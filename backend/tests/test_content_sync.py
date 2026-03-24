@@ -10,6 +10,7 @@ from app.schemas.content_sync import (
     ContentManifest,
     SourceDocumentRecord,
 )
+from app.services.content_sync_rate_limiter import content_sync_rate_limiter
 from app.services.content_sync_service import ContentSyncService
 from app.services.question_service import QuestionService, reset_question_cache
 
@@ -69,7 +70,9 @@ def isolated_sqlite(tmp_path: Path) -> None:
     original_path = settings.sqlite_path
     settings.sqlite_path = tmp_path / "content.db"
     reset_question_cache()
+    content_sync_rate_limiter.reset()
     yield
+    content_sync_rate_limiter.reset()
     reset_question_cache()
     settings.sqlite_path = original_path
 
@@ -118,8 +121,14 @@ def test_import_reuses_existing_snapshot_for_same_bundle_version(isolated_sqlite
 def content_sync_token() -> None:
     original_token = settings.content_sync_token
     settings.content_sync_token = "test-sync-token"
+    original_max_requests = settings.content_sync_rate_limit_max_requests
+    original_window_seconds = settings.content_sync_rate_limit_window_seconds
+    settings.content_sync_rate_limit_max_requests = 10
+    settings.content_sync_rate_limit_window_seconds = 60
     yield
     settings.content_sync_token = original_token
+    settings.content_sync_rate_limit_max_requests = original_max_requests
+    settings.content_sync_rate_limit_window_seconds = original_window_seconds
 
 
 def test_content_sync_requires_token(isolated_sqlite: None, content_sync_token: None) -> None:
@@ -158,6 +167,45 @@ def test_content_sync_returns_503_when_server_token_is_unset(isolated_sqlite: No
     assert exc_info.value.detail == "Content sync token is not configured."
 
 
+def test_content_sync_rate_limit_allows_requests_within_window(
+    isolated_sqlite: None, content_sync_token: None
+) -> None:
+    settings.content_sync_rate_limit_max_requests = 2
+    settings.content_sync_rate_limit_window_seconds = 60
+
+    assert content_sync_rate_limiter.allow("test-sync-token", now=0.0) is True
+    assert content_sync_rate_limiter.allow("test-sync-token", now=10.0) is True
+
+
+def test_content_sync_rate_limit_rejects_excess_requests(
+    isolated_sqlite: None, content_sync_token: None
+) -> None:
+    settings.content_sync_rate_limit_max_requests = 2
+    settings.content_sync_rate_limit_window_seconds = 60
+    content_sync_rate_limiter.reset()
+
+    import_content_bundle(_sample_bundle("bundle-20260324-003"), content_sync_token="test-sync-token")
+    import_content_bundle(_sample_bundle("bundle-20260324-004"), content_sync_token="test-sync-token")
+
+    with pytest.raises(HTTPException) as exc_info:
+        import_content_bundle(_sample_bundle("bundle-20260324-005"), content_sync_token="test-sync-token")
+
+    assert exc_info.value.status_code == 429
+    assert exc_info.value.detail == "Content sync rate limit exceeded."
+
+
+def test_content_sync_rate_limit_window_expires(
+    isolated_sqlite: None, content_sync_token: None
+) -> None:
+    settings.content_sync_rate_limit_max_requests = 2
+    settings.content_sync_rate_limit_window_seconds = 60
+    content_sync_rate_limiter.reset()
+
+    assert content_sync_rate_limiter.allow("test-sync-token", now=0.0) is True
+    assert content_sync_rate_limiter.allow("test-sync-token", now=10.0) is True
+    assert content_sync_rate_limiter.allow("test-sync-token", now=61.0) is True
+
+
 def test_settings_reads_sqlite_path_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     expected_path = "/data/content.db"
     monkeypatch.setenv("SQLITE_PATH", expected_path)
@@ -165,3 +213,13 @@ def test_settings_reads_sqlite_path_from_env(monkeypatch: pytest.MonkeyPatch) ->
     configured = Settings()
 
     assert configured.sqlite_path == Path(expected_path)
+
+
+def test_settings_reads_content_sync_rate_limit_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CONTENT_SYNC_RATE_LIMIT_MAX_REQUESTS", "15")
+    monkeypatch.setenv("CONTENT_SYNC_RATE_LIMIT_WINDOW_SECONDS", "120")
+
+    configured = Settings()
+
+    assert configured.content_sync_rate_limit_max_requests == 15
+    assert configured.content_sync_rate_limit_window_seconds == 120
