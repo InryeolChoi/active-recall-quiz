@@ -1,11 +1,11 @@
 # Public API Protection Policy
 
-This document defines the minimum protection policy for the public read APIs in `active-recall-quiz`.
-It records what must be protected immediately and what can be hardened later as traffic grows.
+This document records the minimum protection policy for public read endpoints in `active-recall-quiz`.
+It covers the current runtime posture after the notes-sync migration and separates immediate safeguards from later hardening work.
 
 ## Scope
 
-Public endpoints in scope:
+Protected surfaces:
 
 - `GET /api/units`
 - `GET /api/questions`
@@ -16,45 +16,45 @@ Public endpoints in scope:
 - `POST /api/exams/{examId}/submit`
 - `POST /api/content-sync/bundles`
 
-The sync endpoint is the most sensitive route because it mutates SQLite.
-Read endpoints remain public for the frontend, but they still need basic abuse controls.
+The sync endpoint is write-sensitive and should be treated as the highest-risk route.
+Read endpoints are public by design, but they still need basic abuse controls once traffic grows.
 
 ## Current Posture
 
-- Runtime content is already served from SQLite after notes sync imports an active snapshot.
-- `POST /api/content-sync/bundles` is protected by `X-Content-Sync-Token`.
-- The backend currently allows broad CORS origins, so CORS should not be treated as an auth layer.
-- The frontend is deployed separately and reads from the backend API.
+- Runtime content is served from SQLite after notes sync imports an active snapshot.
+- Notes ingestion already requires `X-Content-Sync-Token`.
+- The backend currently allows broad CORS origins and should not rely on CORS as an access control boundary.
+- The frontend is deployed separately and only consumes the backend API.
 
-## Immediate Protection
+## Immediate Policy
 
-### 1. Protect sync first
+### 1. Rate limit target
 
-- Keep `POST /api/content-sync/bundles` token-protected at all times.
-- Apply the first rate limit here, not on the read endpoints.
-- Tune the limit so normal `active-recall-notes` reruns stay safe and idempotent.
+- Apply the first rate limit to `POST /api/content-sync/bundles`.
+- Keep the limit loose enough to allow normal notes CI/CD retries and idempotent re-syncs.
+- Treat repeated auth failures or burst traffic as a signal to tighten the policy later.
 
-Recommended immediate behavior:
+Recommended immediate rule:
 
-- allow small bursts for legitimate CI/CD retries
-- reject excessive repeated sync attempts
-- keep repeated bundle re-imports idempotent
+- low request volume per token and per source IP
+- short burst allowance for reruns
+- retry-safe so the same bundle can be posted again without operational breakage
 
-### 2. Keep read APIs available
+### 2. Public read endpoints
 
-- Do not block the public read APIs behind auth.
-- Keep them stable for the frontend and for direct debugging.
-- Watch usage on `/api/units` and `/api/questions`, since these are the most likely hot paths.
+- Keep the read API publicly reachable for the frontend.
+- Prefer server-side read efficiency instead of blocking access outright.
+- Watch for heavy callers on `/api/units` and `/api/questions`, because these are the primary list endpoints hit by the UI.
 
-### 3. Narrow CORS later
+### 3. CORS
 
-- Open CORS should be treated as a development convenience, not a security boundary.
-- Narrow CORS to the deployed frontend origin once the production frontend URL is stable.
-- Keep localhost origins only for local development.
+- Do not use open CORS as a security feature.
+- Narrow CORS to the deployed frontend origin when the production frontend URL is stable.
+- Keep localhost and development origins only for local development.
 
-### 4. Log the right events
+### 4. Logging
 
-Minimum logs to keep:
+Log the following events at minimum:
 
 - sync request start
 - sync request success
@@ -63,51 +63,51 @@ Minimum logs to keep:
 - validation failure
 - repeated bundle reuse
 
-For sync requests, include:
+For each sync request, include:
 
 - bundle version
 - source commit
-- request result
+- request outcome
 - failure reason when applicable
 
 ## Later Hardening
 
-These items should follow once the current release is stable.
+These items are important, but they can follow the first production-ready sync rollout.
 
 - Per-route rate limiting for `GET /api/units` and `GET /api/questions`
-- IP-based throttling for repeated public access
+- IP-based throttling for repeated public API access
 - CDN or WAF protection in front of the backend
 - Response caching for stable read endpoints
 - Structured metrics for sync volume and failure rate
-- Alerting for repeated sync failures or traffic spikes
+- Alerting for repeated sync failures or abnormal request spikes
 
 ## Operational Guidance
 
 ### Immediate response
 
-When traffic or abuse increases:
+Use the following as the first response plan when traffic or abuse increases:
 
-- keep sync token protection enabled
+- keep `content-sync` token protection enabled
+- reduce the sync retry window if repeated noise appears
 - inspect backend logs for bundle version and source commit
-- confirm whether the caller is a legitimate notes rerun
-- reduce retry windows if repeated noise appears
+- confirm whether the call pattern is a legitimate notes re-run
 
 ### Escalation path
 
 If abuse continues:
 
 - narrow CORS to the deployed frontend origin only
-- add a small limiter to the public read APIs
+- add a small rate limiter on the public GET endpoints
 - place a proxy or CDN with throttling in front of the backend
-- rotate the sync token if exposure is suspected
+- rotate the sync token if the secret is suspected to be exposed
 
 ## Completion Criteria
 
-This policy is satisfied for the current release when:
+This policy is considered satisfied for the current release when:
 
 - `content-sync` remains token-protected
-- the public read APIs continue serving the frontend
-- logs are sufficient to trace sync requests
-- no write access is exposed through public read routes
+- the backend can serve public read traffic without exposing write access
+- logs show enough information to trace sync requests
+- the frontend can keep reading from the backend without extra changes
 
-The items in the later hardening section should be tracked separately when traffic or operational risk justifies them.
+The remaining items in the "Later Hardening" section should be tracked separately once traffic or operational needs justify them.

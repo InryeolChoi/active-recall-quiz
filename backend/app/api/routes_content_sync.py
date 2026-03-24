@@ -4,6 +4,7 @@ from fastapi import APIRouter, Header, HTTPException, status
 
 from app.core.config import settings
 from app.schemas.content_sync import ContentBundleImportRequest, ContentBundleImportResult
+from app.services.content_sync_rate_limiter import content_sync_rate_limiter
 from app.services.content_sync_service import ContentSyncService
 
 router = APIRouter(tags=["content-sync"])
@@ -30,6 +31,12 @@ def import_content_bundle(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid content sync token.",
+        )
+
+    if not content_sync_rate_limiter.allow(content_sync_token):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Content sync rate limit exceeded.",
         )
 
     return ContentSyncService().import_bundle(payload)
