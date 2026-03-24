@@ -11,7 +11,6 @@ def _default_sqlite_path() -> Path:
 
 class Settings(BaseModel):
     app_root: Path = Path(__file__).resolve().parents[3]
-    content_glob: str = "unit_*/*.md"
     sqlite_path: Path = Field(default_factory=_default_sqlite_path)
     content_sync_token: str | None = os.getenv("CONTENT_SYNC_TOKEN")
 
