@@ -1,7 +1,9 @@
 from pathlib import Path
 
 import pytest
+from fastapi import HTTPException
 
+from app.api.routes_content_sync import import_content_bundle
 from app.core.config import settings
 from app.schemas.content_sync import (
     ContentBundleImportRequest,
@@ -105,3 +107,47 @@ def test_import_reuses_existing_snapshot_for_same_bundle_version(isolated_sqlite
     assert second.reusedSnapshot is True
     assert second.snapshotId == first.snapshotId
     assert len(questions) == 2
+
+
+@pytest.fixture()
+def content_sync_token() -> None:
+    original_token = settings.content_sync_token
+    settings.content_sync_token = "test-sync-token"
+    yield
+    settings.content_sync_token = original_token
+
+
+def test_content_sync_requires_token(isolated_sqlite: None, content_sync_token: None) -> None:
+    with pytest.raises(HTTPException) as exc_info:
+        import_content_bundle(_sample_bundle())
+
+    assert exc_info.value.status_code == 401
+    assert exc_info.value.detail == "Missing content sync token."
+
+
+def test_content_sync_rejects_invalid_token(isolated_sqlite: None, content_sync_token: None) -> None:
+    with pytest.raises(HTTPException) as exc_info:
+        import_content_bundle(_sample_bundle(), content_sync_token="wrong-token")
+
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.detail == "Invalid content sync token."
+
+
+def test_content_sync_accepts_valid_token(isolated_sqlite: None, content_sync_token: None) -> None:
+    response = import_content_bundle(_sample_bundle(), content_sync_token="test-sync-token")
+
+    assert response.importedQuestionCount == 2
+
+
+def test_content_sync_returns_503_when_server_token_is_unset(isolated_sqlite: None) -> None:
+    original_token = settings.content_sync_token
+    settings.content_sync_token = None
+
+    try:
+        with pytest.raises(HTTPException) as exc_info:
+            import_content_bundle(_sample_bundle(), content_sync_token="any-token")
+    finally:
+        settings.content_sync_token = original_token
+
+    assert exc_info.value.status_code == 503
+    assert exc_info.value.detail == "Content sync token is not configured."
