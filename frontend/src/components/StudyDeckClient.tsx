@@ -24,6 +24,16 @@ function getQuestionLabel(question: QuestionDetail) {
   return question.title?.trim() || question.prompts[0] || question.questionId;
 }
 
+function getUnitLabel(unit: UnitSummary) {
+  const title = unit.title?.trim();
+
+  if (!title || title === unit.unitId) {
+    return unit.unitId;
+  }
+
+  return `${unit.unitId} · ${title}`;
+}
+
 export function StudyDeckClient({ questions, units }: Props) {
   const [selectedUnitId, setSelectedUnitId] = useState("");
   const [selectedPart, setSelectedPart] = useState("");
@@ -134,7 +144,6 @@ export function StudyDeckClient({ questions, units }: Props) {
 
   function handleTocSelect(index: number) {
     goToIndex(index, index > activeIndex ? "forward" : "backward");
-    setMenuCollapsed(true);
   }
 
   return (
@@ -179,7 +188,7 @@ export function StudyDeckClient({ questions, units }: Props) {
                   <option value="">단원을 먼저 골라주세요</option>
                   {units.map((unit) => (
                     <option key={unit.unitId} value={unit.unitId}>
-                      {unit.unitId} · {unit.title}
+                      {getUnitLabel(unit)}
                     </option>
                   ))}
                 </select>
@@ -263,90 +272,110 @@ export function StudyDeckClient({ questions, units }: Props) {
         )}
       </section>
 
-      {currentQuestion ? (
-        <div className={`deck-frame deck-frame--${direction}`} key={currentQuestion.questionId}>
-          <QuestionCard
-            index={activeIndex}
-            meta={`${currentQuestion.unitId} / ${currentQuestion.part} / ${currentQuestion.type}`}
-            prompts={currentQuestion.prompts}
-          >
-            <div className="stack">
-              <p className="muted">먼저 답을 떠올리고, 힌트와 정답은 필요할 때만 펼쳐 보세요.</p>
+      <div className="study-focus-layout">
+        {isScopeReady ? (
+          <aside className="study-focus-sidebar">
+            <button
+              className="secondary study-collapse-toggle"
+              type="button"
+              onClick={() => setMenuCollapsed((current) => !current)}
+            >
+              {menuCollapsed ? "목차 펼치기" : "목차 접기"}
+            </button>
+          </aside>
+        ) : null}
 
-              <div className="study-action-row">
-                <button className="secondary" type="button" onClick={() => setShowHint((current) => !current)}>
-                  {showHint ? "힌트 닫기" : "힌트 보기"}
-                </button>
-                <button className="secondary" type="button" onClick={() => setRevealAnswer((current) => !current)}>
-                  {revealAnswer ? "정답 숨기기" : "정답 보기"}
-                </button>
-              </div>
+        <div className="study-focus-main">
+          {currentQuestion ? (
+            <div className={`deck-frame deck-frame--${direction}`} key={currentQuestion.questionId}>
+              <QuestionCard
+                index={activeIndex}
+                meta={`${currentQuestion.unitId} / ${currentQuestion.part} / ${currentQuestion.type}`}
+                prompts={currentQuestion.prompts}
+              >
+                <div className="stack">
+                  <p className="muted">먼저 답을 떠올리고, 힌트와 정답은 필요할 때만 펼쳐 보세요.</p>
 
-              {showHint ? (
-                <div className="hint-box stack">
-                  <strong>힌트</strong>
-                  <div className="hint-list">
-                    <div>
-                      <span className="muted">키워드</span>
-                      <p>{currentQuestion.keywords.length ? currentQuestion.keywords.join(" / ") : "등록된 키워드 없음"}</p>
+                  <div className="study-action-row">
+                    <button className="secondary" type="button" onClick={() => setShowHint((current) => !current)}>
+                      {showHint ? "힌트 닫기" : "힌트 보기"}
+                    </button>
+                    <button className="secondary" type="button" onClick={() => setRevealAnswer((current) => !current)}>
+                      {revealAnswer ? "정답 숨기기" : "정답 보기"}
+                    </button>
+                  </div>
+
+                  {showHint ? (
+                    <div className="hint-box stack">
+                      <strong>힌트</strong>
+                      <div className="hint-list">
+                        <div>
+                          <span className="muted">키워드</span>
+                          <p>
+                            {currentQuestion.keywords.length ? currentQuestion.keywords.join(" / ") : "등록된 키워드 없음"}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="muted">연관 표현</span>
+                          <p>
+                            {currentQuestion.aliases.length ? currentQuestion.aliases.join(" / ") : "등록된 대체 표현 없음"}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <span className="muted">연관 표현</span>
-                      <p>{currentQuestion.aliases.length ? currentQuestion.aliases.join(" / ") : "등록된 대체 표현 없음"}</p>
+                  ) : null}
+
+                  {revealAnswer ? (
+                    <div className="study-answer stack">
+                      <strong>정답</strong>
+                      <p>{currentQuestion.answers.join(" / ")}</p>
                     </div>
+                  ) : null}
+
+                  <div className="study-action-row">
+                    <button type="button" onClick={() => handleRemembered(currentQuestion.questionId, true)}>
+                      외웠어요
+                    </button>
+                    <button
+                      className="secondary"
+                      type="button"
+                      onClick={() => handleRemembered(currentQuestion.questionId, false)}
+                    >
+                      다시 볼래요
+                    </button>
+                    <button
+                      className="secondary"
+                      disabled={activeIndex === 0}
+                      type="button"
+                      onClick={() => goToIndex(activeIndex - 1, "backward")}
+                    >
+                      이전 카드
+                    </button>
+                    <button
+                      className="secondary"
+                      disabled={activeIndex >= visibleCount - 1}
+                      type="button"
+                      onClick={() => goToIndex(activeIndex + 1, "forward")}
+                    >
+                      다음 카드
+                    </button>
                   </div>
                 </div>
-              ) : null}
-
-              {revealAnswer ? (
-                <div className="study-answer stack">
-                  <strong>정답</strong>
-                  <p>{currentQuestion.answers.join(" / ")}</p>
-                </div>
-              ) : null}
-
-              <div className="study-action-row">
-                <button type="button" onClick={() => handleRemembered(currentQuestion.questionId, true)}>
-                  외웠어요
-                </button>
-                <button
-                  className="secondary"
-                  type="button"
-                  onClick={() => handleRemembered(currentQuestion.questionId, false)}
-                >
-                  다시 볼래요
-                </button>
-                <button
-                  className="secondary"
-                  disabled={activeIndex === 0}
-                  type="button"
-                  onClick={() => goToIndex(activeIndex - 1, "backward")}
-                >
-                  이전 카드
-                </button>
-                <button
-                  className="secondary"
-                  disabled={activeIndex >= visibleCount - 1}
-                  type="button"
-                  onClick={() => goToIndex(activeIndex + 1, "forward")}
-                >
-                  다음 카드
+              </QuestionCard>
+            </div>
+          ) : (
+            <section className="panel stack">
+              <h2>학습을 시작할 카드가 아직 없습니다.</h2>
+              <p className="muted">단원과 파트를 먼저 고르거나, 다른 범위로 바꿔서 다시 시도해 보세요.</p>
+              <div className="actions">
+                <button type="button" onClick={resetSession}>
+                  선택 초기화
                 </button>
               </div>
-            </div>
-          </QuestionCard>
+            </section>
+          )}
         </div>
-      ) : (
-        <section className="panel stack">
-          <h2>학습을 시작할 카드가 아직 없습니다.</h2>
-          <p className="muted">단원과 파트를 먼저 고르거나, 다른 범위로 바꿔서 다시 시도해 보세요.</p>
-          <div className="actions">
-            <button type="button" onClick={resetSession}>
-              선택 초기화
-            </button>
-          </div>
-        </section>
-      )}
+      </div>
     </div>
   );
 }
