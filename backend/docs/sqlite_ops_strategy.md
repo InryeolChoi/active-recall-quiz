@@ -16,11 +16,13 @@ It bridges the schema work in `#31`, the sync design in `#32`, and the importer 
 
 - Keep the repository-local default at `backend/data/content.db` for local development and test environments.
 - Treat this as the fallback path, not the long-term production target.
+- Override the runtime path with `SQLITE_PATH` when deploying to an external volume.
 
 ### Production Target
 
 - Use a persistent mounted path outside the application source tree.
 - Recommended production mount path: `/var/lib/active-recall-quiz/content.db`.
+- Railway-friendly example: `SQLITE_PATH=/data/content.db`
 - The app container should see the database through a volume mount, not a committed file.
 
 ### Environment Separation
@@ -89,4 +91,3 @@ This means `active-recall-notes` can safely automate content release without kno
 - The current repository-local default path is acceptable for local work, but production should move to a mounted volume.
 - The importer should be able to create the database file on demand.
 - `active-recall-notes` will emit a versioned artifact or dispatch event before this repository applies the import.
-

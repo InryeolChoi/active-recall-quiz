@@ -4,7 +4,7 @@ import pytest
 from fastapi import HTTPException
 
 from app.api.routes_content_sync import import_content_bundle
-from app.core.config import settings
+from app.core.config import Settings, settings
 from app.schemas.content_sync import (
     ContentBundleImportRequest,
     ContentManifest,
@@ -151,3 +151,12 @@ def test_content_sync_returns_503_when_server_token_is_unset(isolated_sqlite: No
 
     assert exc_info.value.status_code == 503
     assert exc_info.value.detail == "Content sync token is not configured."
+
+
+def test_settings_reads_sqlite_path_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    expected_path = "/data/content.db"
+    monkeypatch.setenv("SQLITE_PATH", expected_path)
+
+    configured = Settings()
+
+    assert configured.sqlite_path == Path(expected_path)
