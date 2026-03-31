@@ -22,6 +22,16 @@ function getUnitLabel(unit: UnitSummary) {
   return `${unit.unitId} · ${title}`;
 }
 
+function formatPartLabel(part: string, title?: string | null) {
+  const normalizedTitle = title?.trim();
+
+  if (!normalizedTitle || normalizedTitle === part) {
+    return part;
+  }
+
+  return `${part} (${normalizedTitle})`;
+}
+
 export function StudyDeckClient({ questions, units }: Props) {
   const [selectedUnitId, setSelectedUnitId] = useState("");
   const [selectedPart, setSelectedPart] = useState("");
@@ -37,6 +47,26 @@ export function StudyDeckClient({ questions, units }: Props) {
   const selectedUnit = units.find((unit) => unit.unitId === selectedUnitId) ?? null;
   const partOptions = selectedUnit?.parts ?? [];
   const isScopeReady = selectedUnitId !== "" && selectedPart !== "";
+  const partTitleMap = useMemo(() => {
+    if (!selectedUnitId) {
+      return {};
+    }
+
+    return questions.reduce<Record<string, string>>((current, question) => {
+      if (question.unitId !== selectedUnitId || current[question.part]) {
+        return current;
+      }
+
+      const title = question.title?.trim();
+
+      if (!title) {
+        return current;
+      }
+
+      current[question.part] = title;
+      return current;
+    }, {});
+  }, [questions, selectedUnitId]);
 
   const catalogQuestions = useMemo(
     () =>
@@ -192,7 +222,7 @@ export function StudyDeckClient({ questions, units }: Props) {
                   <option value="">{selectedUnit ? "파트를 골라주세요" : "먼저 단원을 골라주세요"}</option>
                   {partOptions.map((part) => (
                     <option key={part} value={part}>
-                      {part}
+                      {formatPartLabel(part, partTitleMap[part])}
                     </option>
                   ))}
                 </select>
